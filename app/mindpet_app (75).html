@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindPet – Cuida tu mente 🐾</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --cyan:   #57ffeb;
+    --purple: #a99cf9;
+    --dark:   #2d2c27;
+    --cream:  #fcf4e7;
+    --pixel: 'Pixelify Sans', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+  ::selection { background: #57ffeb; color: var(--dark); }
+
+  body {
+    background: var(--dark);
+    font-family: var(--pixel);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(87,255,235,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(87,255,235,0.04) 1px, transparent 1px);
+    background-size: 16px 16px; pointer-events: none; z-index: 0;
+  }
+
+  .phone {
+    width: 360px; height: 700px; background: var(--dark);
+    border: 3px solid rgba(252,244,231,0.15); border-radius: 32px;
+    position: relative; z-index: 10; overflow: hidden;
+    box-shadow: 0 0 0 2px var(--dark), 0 0 40px rgba(87,255,235,0.12), inset 0 0 30px rgba(0,0,0,0.4);
+  }
+  .screen { width:100%; height:100%; position:relative; overflow:hidden; }
+
+  /* WIN BAR */
+  .win-bar {
+    height: 34px; background: var(--cream);
+    border-bottom: 2px solid rgba(45,44,39,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; position: absolute; top:0; left:0; right:0; z-index:100; overflow:hidden;
+  }
+  .win-bar-inline {
+    height: 34px; background: var(--cream);
+    border-bottom: 2px solid rgba(45,44,39,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; border-radius: 4px 4px 0 0; margin-bottom: 6px; flex-shrink: 0; overflow:hidden;
+  }
+  .win-title { font-family:var(--pixel); font-size:11px; font-weight:700; color:var(--dark); letter-spacing:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:175px; margin-left:10px; }
+  .win-btns { display:flex; gap:3px; margin-right:2px; }
+  .win-btn {
+    width:20px; height:17px; border:none;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all 0.1s;
+    background:transparent; flex-shrink:0;
+    padding:2px;
+  }
+  .win-btn img { width:100%; height:100%; object-fit:contain; display:block; }
+  .win-btn.min { }
+  .win-btn.max { }
+  .win-btn.cls { }
+  .win-btn:hover { transform:scale(1.15); opacity:0.8; }
+
+  .page { position:absolute; inset:0; display:none; flex-direction:column; padding-top:34px; }
+  .page.active { display:flex; }
+
+  /* ===== INTRO ===== */
+  #screen-intro {
+    background: var(--dark);
+    align-items:center; justify-content:center; gap:10px; padding:24px 20px 16px;
+  }
+  .logo-text {
+    font-size:26px; color:var(--cyan); text-align:center;
+    text-shadow:3px 3px 0 var(--purple); animation:blink-glow 2s infinite; letter-spacing:2px;
+  }
+  .logo-sub { font-size:11px; color:var(--purple); text-align:center; letter-spacing:1px; }
+  @keyframes blink-glow {
+    0%,100% { text-shadow:3px 3px 0 var(--purple),0 0 10px rgba(87,255,235,0.4); }
+    50%      { text-shadow:3px 3px 0 var(--purple),0 0 22px rgba(87,255,235,0.9); }
+  }
+  .pet-selector { display:flex; gap:12px; margin:4px 0; }
+  .pet-opt {
+    width:72px; height:72px; border:2px solid rgba(252,244,231,0.2); border-radius:6px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; transition:all 0.15s; gap:4px; background:rgba(0,0,0,0.3);
+  }
+  .pet-opt:hover, .pet-opt.selected { border-color:var(--cyan); background:rgba(87,255,235,0.1); transform:translateY(-2px); }
+  .pet-opt .emoji { font-size:28px; }
+  .pet-opt .pet-label { font-size:10px; color:var(--cream); }
+
+  .color-row { display:flex; gap:8px; align-items:center; }
+  .color-dot { width:20px; height:20px; border:2px solid transparent; cursor:pointer; transition:all 0.15s; border-radius:3px; }
+  .color-dot:hover, .color-dot.selected { border-color:var(--cream); transform:scale(1.15); }
+
+  .pixel-label { font-size:11px; color:var(--cyan); align-self:flex-start; }
+  .pixel-input {
+    background:rgba(0,0,0,0.3); border:2px solid rgba(252,244,231,0.2); color:var(--cream);
+    font-family:var(--pixel); font-size:11px; padding:8px; width:100%; outline:none;
+    resize:none; transition:border-color 0.2s; border-radius:4px;
+  }
+  .pixel-input:focus { border-color:var(--cyan); }
+  .pixel-input::placeholder { color:rgba(252,244,231,0.3); }
+
+  /* BUTTON BASE — cream fill, dark text, rounded */
+  .btn {
+    background:var(--cream); border:2px solid var(--cream); color:var(--dark);
+    font-family:var(--pixel); cursor:pointer; transition:all 0.15s; border-radius:8px;
+  }
+  .btn:hover { background:var(--dark); color:var(--cream); border-color:var(--cream); transform:translateY(-1px); }
+
+  .pixel-btn { font-size:13px; padding:12px 22px; }
+
+  /* ===== APP ===== */
+  #screen-app { background:var(--dark); flex-direction:column; }
+  .app-content { flex:1; overflow:hidden; position:relative; }
+  .tab { display:none; flex-direction:column; height:100%; overflow-y:auto; }
+  .tab.active { display:flex; }
+
+  /* NAVBAR */
+  .navbar {
+    height:64px; background:var(--dark); border:2px solid rgba(252,244,231,0.15);
+    border-radius:9999px; margin:0 16px 10px;
+    display:flex; align-items:center; justify-content:space-around;
+    padding:0 10px; position:relative; z-index:50;
+    box-shadow:0 0 18px rgba(87,255,235,0.07);
+  }
+  .nav-item {
+    display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:50%;
+    cursor:pointer; transition:all 0.2s; position:relative;
+    background:transparent;
+  }
+  .nav-item:hover { background:rgba(252,244,231,0.1); transform:scale(1.08); }
+  .nav-item.active { background:var(--cream); }
+  .nav-icon { width:45px; height:45px; object-fit:contain; transition:all 0.2s; display:block; }
+  .nav-label { display:none; }
+  .notif-dot {
+    position:absolute; top:6px; right:6px; width:7px; height:7px;
+    background:var(--cyan); border-radius:50%; animation:notif-blink 1.5s infinite;
+  }
+  @keyframes notif-blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+  /* ===== HOME ===== */
+  #tab-home { align-items:center; justify-content:flex-start; padding:8px 0 0; position:relative; background:var(--cream); }
+
+  /* STATS — horizontal, contained */
+  .stats-bar {
+    width:100%; padding:6px 14px 4px;
+    display:flex; flex-direction:row; gap:6px; justify-content:space-between; flex-shrink:0;
+  }
+  .stat-col { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; min-width:0; }
+  .stat-icon { font-size:13px; line-height:1; }
+  .stat-label-h { font-size:10px; color:var(--cream); opacity:0.75; text-align:center; line-height:1.3; white-space:nowrap; }
+  .stat-track-v {
+    width:100%; height:7px; background:rgba(0,0,0,0.45);
+    border:1.5px solid rgba(252,244,231,0.15); border-radius:3px; overflow:hidden;
+  }
+  .stat-fill-h { height:100%; transition:width 0.5s ease; border-radius:3px; background:var(--purple); }
+  .stat-num { font-size:9px; color:var(--cream); opacity:0.65; }
+
+  .pet-area {
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:relative; width:100%;
+  }
+  .pet-sprite-wrap {
+    position: absolute;
+    left: 50%;
+    top: calc(50% - 30px);
+    transform: translate(calc(-50% + 10px), -50%);
+    z-index: 2;
+    width: 209.38px;
+    height: 209.26px;
+    cursor: grab;
+    transition: transform 0.25s ease;
+  }
+  .pet-sprite-wrap:hover {
+    transform: translate(calc(-50% + 10px), -50%) scale(0.93);
+  }
+  .pet-sprite-wrap.dragging {
+    cursor: grabbing;
+    transition: none;
+  }
+  /* drag frames */
+  .pet-drag-png {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    display: block;
+  }
+  .pet-drag-png.visible { opacity: 1; }
+  .pet-png {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    display: block;
+  }
+  .pet-png.visible { opacity: 1; pointer-events: none; }
+
+  .pet-sprite { display:none; } /* keep for JS compat */
+  @keyframes pet-bounce {
+    0%{transform:translateX(-50%) scale(1);} 30%{transform:translateX(-50%) scale(1.12) rotate(-4deg);}
+    60%{transform:translateX(-50%) scale(0.96) rotate(2deg);} 100%{transform:translateX(-50%) scale(1);}
+  }
+  .pet-png.bounce { animation: pet-bounce 0.4s ease; }
+  .pet-name-tag { font-size:13px; color:var(--cream); margin-top:6px; text-shadow:0 0 8px rgba(87,255,235,0.4); }
+
+  .action-bar { width:100%; display:flex; justify-content:center; gap:10px; padding:6px 0; flex-shrink:0; }
+  .action-btn {
+    display:flex; align-items:center; gap:5px; font-size:11px; padding:7px 14px;
+  }
+  .action-btn .ab-icon { font-size:14px; }
+
+  /* ── item-menu ── */
+  .item-menu {
+    display:none; position:absolute; bottom:76px; left:50%; transform:translateX(-50%);
+    z-index:200; width:290px;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.55));
+  }
+  .item-menu.show { display:block; animation:slide-up 0.2s ease; }
+  @keyframes slide-up { from{opacity:0;transform:translateX(-50%) translateY(10px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+  /* title-bar: negro, rounded solo arriba */
+  .im-titlebar {
+    background: var(--dark);
+    border-radius: 8px 8px 0 0;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    padding-left: 16.5px;
+    gap: 6px;
+    position: relative;
+  }
+  .im-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1px solid var(--cream);
+    flex-shrink: 0;
+  }
+  .im-dot-1 { background: var(--dark); }
+  .im-dot-2 { background: var(--purple); }
+  .im-dot-3 { background: var(--cyan); }
+  .im-titlebar-text {
+    font-family: var(--pixel); font-size: 8px; font-weight:700;
+    color: var(--cream); text-transform: uppercase;
+    margin-left: 35px; flex: 1; letter-spacing: 0;
+  }
+  .im-close-wrap { display:flex; gap:4px; margin-right:10px; }
+  .im-x, .im-xb {
+    font-family: var(--pixel); font-size: 9px; color: var(--cream);
+    cursor: pointer; background: transparent; border: none;
+    padding: 0 2px; line-height:1; transition: opacity 0.15s, transform 0.15s;
+    display: none;
+  }
+  .im-titlebar:hover .im-x { display: block; }
+  .im-xb { display: none; color: var(--cyan); }
+  .im-titlebar:hover .im-x:hover { display:none; }
+  .im-titlebar:hover .im-x:hover + .im-xb,
+  .im-x:hover ~ .im-xb { display:block; }
+  /* simpler approach: always show x, hover changes color */
+  .im-close-btn {
+    font-family: var(--pixel); font-size: 10px; color: var(--cream);
+    cursor: pointer; background: transparent; border: none;
+    padding: 0 3px; line-height:1; transition: color 0.12s, transform 0.12s;
+  }
+  .im-close-btn:hover { color: var(--cyan); transform: scale(1.25); }
+
+  /* body: beige, rounded solo abajo */
+  .im-body {
+    background: var(--cream);
+    border-radius: 0 0 8px 8px;
+    padding: 10px 10px 10px 10px;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* grid de slots */
+  .im-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 56px);
+    grid-template-rows: repeat(2, 56px);
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .im-slot {
+    width: 56px; height: 56px;
+    position: relative; cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+    border-radius: 4px; overflow: hidden;
+  }
+  .im-slot img.slot-bg {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    pointer-events: none;
+  }
+  .im-slot img.slot-item {
+    position: absolute; inset: 6px;
+    width: calc(100% - 12px); height: calc(100% - 12px);
+    object-fit: contain; pointer-events: none;
+  }
+  .im-slot:hover { transform: scale(1.08); filter: brightness(1.15); }
+  .im-slot:active { transform: scale(0.95); }
+
+  /* scrollbar lateral */
+  .im-scrollbar {
+    width: 20px; height: 130px; flex-shrink: 0;
+    position: relative; user-select: none;
+  }
+  .im-slider-thumb {
+    position: absolute; left: 0; top: 0;
+    width: 20px; height: 35px;
+    cursor: grab;
+  }
+  .im-slider-thumb:active { cursor: grabbing; }
+  .im-slider-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+
+  /* ===== DIARY ===== */
+
+  .ai-popup {
+    display:none; position:absolute; inset:24px 0 0; background:rgba(45,44,39,0.97);
+    z-index:300; flex-direction:column; padding:12px; gap:10px; overflow-y:auto;
+  }
+  .ai-popup.show { display:flex; animation:fade-in 0.3s ease; }
+  @keyframes fade-in { from{opacity:0;} to{opacity:1;} }
+  .ai-popup-title { font-size:12px; color:var(--cyan); }
+  .ai-response-text {
+    font-size:11px; color:var(--cream); line-height:1.8;
+    border:2px solid rgba(252,244,231,0.15); padding:10px;
+    background:rgba(0,0,0,0.25); flex:1; border-radius:4px; white-space:pre-wrap;
+  }
+  .ai-thinking { font-size:11px; color:var(--cyan); animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+  /* ===== PLANT ===== */
+  #tab-plant { padding:6px 12px 8px; align-items:center; gap:8px; }
+  .plant-subtitle { font-size:10px; color:var(--cream); opacity:0.5; align-self:flex-start; }
+  .plant-container { width:140px; height:140px; flex-shrink:0; }
+  .plant-svg { width:100%; height:100%; }
+
+  /* ── plant stage ── */
+  .plant-stage {
+    position: absolute;
+    left: 0;
+    top: -34px;
+    width: 360px;
+    height: 700px;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .plant-png {
+    position: absolute;
+    pointer-events: all;
+    cursor: pointer;
+    transition: opacity 0.18s ease;
+  }
+  .plant-png:hover { opacity: 0.65; }
+  .plant-png-b {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .plant-png:active ~ .plant-png-b,
+  .plant-png.clicked + .plant-png-b { opacity: 1; }
+  .leaves-list { width:100%; display:flex; flex-direction:column; gap:6px; }
+  .leaf-item {
+    border:2px solid rgba(252,244,231,0.12); padding:8px; background:rgba(0,0,0,0.18);
+    cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:8px; border-radius:6px;
+  }
+  .leaf-item:hover { border-color:var(--purple); transform:translateX(4px); background:rgba(169,156,249,0.07); }
+  .leaf-icon { font-size:20px; flex-shrink:0; }
+  .leaf-info { flex:1; }
+  .leaf-date { font-size:9px; color:var(--purple); margin-bottom:3px; }
+  .leaf-text { font-size:10px; color:var(--cream); line-height:1.6; }
+  .leaf-popup {
+    display:none; position:absolute; inset:24px 0 0; background:rgba(45,44,39,0.97);
+    z-index:300; flex-direction:column; padding:12px; gap:10px;
+    align-items:center; justify-content:center;
+  }
+  .leaf-popup.show { display:flex; animation:fade-in 0.3s ease; }
+  .leaf-popup-card {
+    border:2px solid var(--purple); padding:20px; background:rgba(0,0,0,0.3); width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:10px; border-radius:8px;
+  }
+  .leaf-popup-icon { font-size:48px; }
+  .leaf-popup-date { font-size:10px; color:var(--purple); }
+  .leaf-popup-text { font-size:12px; color:var(--cream); text-align:center; line-height:1.8; }
+
+  /* ===== CONTACTS ===== */
+  #tab-contacts { padding:6px 12px 8px; gap:8px; }
+  .phone-frame {
+    border:2px solid rgba(252,244,231,0.12); border-radius:10px; padding:10px;
+    background:rgba(0,0,0,0.18); flex:1; display:flex; flex-direction:column; gap:6px; overflow-y:auto;
+  }
+  .phone-bar { font-size:10px; color:var(--cream); opacity:0.35; text-align:center; margin-bottom:2px; }
+  .contact-item {
+    border:2px solid rgba(252,244,231,0.1); padding:8px; border-radius:6px;
+    display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.15s; background:rgba(0,0,0,0.15);
+  }
+  .contact-item:hover { border-color:var(--cyan); transform:translateX(3px); background:rgba(87,255,235,0.05); }
+  .contact-avatar { font-size:22px; }
+  .contact-info { flex:1; }
+  .contact-name { font-size:11px; color:var(--cream); margin-bottom:3px; }
+  .contact-status { font-size:9px; color:var(--cyan); }
+  .contact-status.offline { color:var(--purple); opacity:0.7; }
+  .contact-unread {
+    width:16px; height:16px; background:var(--cyan); color:var(--dark);
+    display:flex; align-items:center; justify-content:center; font-size:9px; border-radius:3px;
+  }
+  .contact-popup {
+    display:none; position:absolute; inset:24px 0 0; background:rgba(45,44,39,0.97);
+    z-index:300; flex-direction:column; padding:12px; gap:8px;
+  }
+  .contact-popup.show { display:flex; animation:fade-in 0.2s ease; }
+  .contact-popup-header {
+    display:flex; align-items:center; gap:8px; padding-bottom:8px;
+    border-bottom:1px solid rgba(252,244,231,0.1);
+  }
+  .contact-popup-avatar { font-size:28px; }
+  .contact-popup-name { font-size:13px; color:var(--cream); }
+  .contact-popup-sub { font-size:10px; color:var(--cyan); }
+  .chat-messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding:4px 0; }
+  .msg { max-width:72%; padding:6px 8px; font-size:11px; line-height:1.6; border:1.5px solid; border-radius:6px; }
+  .msg.them { border-color:rgba(252,244,231,0.12); color:var(--cream); background:rgba(0,0,0,0.2); align-self:flex-start; }
+  .msg.me   { border-color:var(--cyan); color:var(--dark); background:var(--cyan); align-self:flex-end; }
+  .chat-input-row { display:flex; gap:6px; }
+  .meme-btn { font-size:10px; padding:7px 9px; white-space:nowrap; }
+
+  /* POPUP CLOSE */
+  .popup-close { font-size:11px; padding:6px 12px; }
+
+  .section-label { font-size:11px; color:var(--cyan); opacity:0.65; align-self:flex-start; width:100%; padding:0 2px; }
+
+  /* Particle */
+  .particle { position:fixed; pointer-events:none; z-index:999; font-size:16px; animation:particle-up 1.5s ease forwards; }
+  @keyframes particle-up { 0%{opacity:1;transform:translateY(0) scale(1);} 100%{opacity:0;transform:translateY(-80px) scale(0.5);} }
+
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:rgba(0,0,0,0.2); }
+  ::-webkit-scrollbar-thumb { background:rgba(252,244,231,0.2); border-radius:2px; }
+
+  /* ── logro cards ── */
+  @keyframes logro-from-left {
+    0%   { opacity:0; transform: translateX(18px); }
+    100% { opacity:1; transform: translateX(0); }
+  }
+  @keyframes logro-from-right {
+    0%   { opacity:0; transform: translateX(-18px); }
+    100% { opacity:1; transform: translateX(0); }
+  }
+  @keyframes logro-from-bottom {
+    0%   { opacity:0; transform: translateY(14px); }
+    100% { opacity:1; transform: translateY(0); }
+  }
+  .logro-card {
+    position: absolute;
+    width: 286.42px;
+    height: 144.40px;
+    z-index: 50;
+    display: none;
+    pointer-events: none;
+    transform-origin: center bottom;
+  }
+  .logro-card img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+  }
+  .logro-card.visible {
+    display: block;
+    animation: logro-from-right 0.35s ease-out forwards;
+  }
+  .logro-card.from-left.visible {
+    animation: logro-from-left 0.35s ease-out forwards;
+  }
+  .logro-card.from-bottom.visible {
+    animation: logro-from-bottom 0.35s ease-out forwards;
+  }
+
+  /* ── plant dim overlay ── */
+  .plant-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0);
+    z-index: 40;
+    pointer-events: none;
+    transition: background 0.4s ease;
+  }
+  .plant-overlay.dim {
+    background: rgba(0,0,0,0.45);
+    pointer-events: all;
+  }
+
+
+  @font-face {
+    font-family: 'Coolvetica';
+    src: url('Coolvetica Rg.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'LowresPixel';
+    src: url('LowresPixel-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  /* ── DIARY ── */
+  #tab-diary {
+    padding: 0;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+  }
+  /* base rectangle: 320x465, centered, 132px from top (+ 34px winbar = 166px from phone top) */
+  /* phone is 700px tall. from bottom: 700 - 34(winbar) - 132 - 465 = 69px... but we use top */
+  .diary-base {
+    position: absolute;
+    width: 320px;
+    height: 465px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 102px; /* 34px winbar + 68px margin */
+    background: var(--dark);
+    border-radius: 0 20px 20px 20px;
+    z-index: 2;
+  }
+  /* tab buttons sit exactly above the base, flush left corner */
+  .diary-tabs-row {
+    position: absolute;
+    left: 0;
+    top: -21px;
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+  }
+  .diary-tab-btn {
+    width: 51px;
+    height: 21px;
+    background: var(--dark);
+    border: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-family: 'LowresPixel', monospace;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.12s;
+    outline: none;
+  }
+  .diary-tab-btn:hover:not(.active) {
+    background: rgba(169,156,249,0.4);
+  }
+  .diary-tab-btn.active {
+    background: var(--purple);
+    color: var(--dark);
+  }
+
+
+  /* ── diary date dropdowns ── */
+  .diary-tab-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  .diary-date-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .diary-tab-wrapper:hover .diary-date-dropdown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+  .diary-date-item {
+    width: 51px;
+    padding: 5px 4px;
+    background: var(--dark);
+    border: 1.2px solid var(--cream);
+    border-bottom: none;
+    font-family: 'LowresPixel', monospace;
+    font-size: 9px;
+    color: var(--cream);
+    cursor: pointer;
+    text-align: left;
+    padding-left: 8px;
+    transition: background 0.12s;
+    white-space: nowrap;
+  }
+  .diary-date-item:last-child { border-bottom: 1.2px solid var(--cream); }
+  .diary-date-item:hover { background: rgba(169,156,249,0.4); color: var(--dark); }
+  .diary-date-item.selected { background: var(--purple); color: var(--dark); }
+  .diary-tab-btn:hover {
+    background: rgba(169,156,249,0.4);
+  }
+
+  /* ── diary chat view ── */
+  .diary-chat-view {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--dark);
+    border-radius: 0 20px 20px 20px;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    z-index: 10;
+  }
+  .diary-chat-view.visible { display: flex; }
+  .diary-chat-scroll {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 12px 10px;
+    gap: 10px;
+    scrollbar-width: none;
+  }
+  .diary-chat-scroll::-webkit-scrollbar { display: none; }
+  .diary-chat-input-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px 12px;
+    border-top: 1px solid rgba(252,244,231,0.1);
+    flex-shrink: 0;
+  }
+  .diary-chat-input {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1.2px solid rgba(252,244,231,0.25);
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-family: 'Coolvetica', sans-serif;
+    font-size: 11px;
+    color: var(--cream);
+    outline: none;
+    resize: none;
+    min-height: 34px;
+    max-height: 80px;
+    line-height: 1.4;
+  }
+  .diary-chat-input::placeholder { color: rgba(252,244,231,0.35); }
+  .diary-chat-send {
+    background: var(--purple);
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .diary-chat-send:hover { transform: scale(1.08); }
+  .diary-chat-send:active { transform: scale(0.94); }
+
+  .chat-bubble-user {
+    width: 215px;
+    min-height: 58px;
+    background: var(--purple);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: 'Coolvetica', sans-serif;
+    font-size: 12.5px;
+    color: var(--dark);
+    line-height: 11pt;
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+  .chat-bubble-ia {
+    width: 215px;
+    min-height: 58px;
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: 'Coolvetica', sans-serif;
+    font-size: 12.5px;
+    color: var(--dark);
+    line-height: 11pt;
+    flex-shrink: 0;
+    margin-right: 10px;
+    display: none;
+  }
+  .chat-bubble-ia.visible {
+    display: block;
+    animation: bubble-in 0.35s ease-out forwards;
+  }
+  @keyframes bubble-in {
+    from { opacity:0; transform: translateY(8px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .chat-action-row {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-action-btn {
+    background: var(--dark);
+    border: 1.5px solid var(--cream);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'LowresPixel', monospace;
+    font-size: 10px;
+    color: var(--cream);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, transform 0.12s;
+  }
+  .chat-action-btn:hover { background: rgba(169,156,249,0.25); transform: scale(1.04); }
+  .chat-action-btn:active { transform: scale(0.97); }
+  .chat-action-btn.save { background: var(--cream); color: var(--dark); border-color: var(--cream); }
+  .chat-action-btn.save:hover { background: #e8d9c0; }
+
+  /* ── bookmark ── */
+  .diary-bookmark-wrap {
+    position: absolute;
+    right: calc(50% - 160px + 45px); /* additional 40px left */
+    top: 102px; /* same top as diary-base */
+    z-index: 20;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .diary-bookmark-img {
+    cursor: pointer;
+    display: block;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .diary-bookmark-img:hover {
+    transform: translateY(-3px);
+    filter: brightness(0) saturate(100%) invert(70%) sepia(40%) saturate(400%) hue-rotate(220deg) brightness(120%);
+  }
+  .bookmark-saved-txt {
+    font-family: 'LowresPixel', monospace;
+    font-size: 7.5pt;
+    color: var(--purple);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .bookmark-saved-txt.show {
+    opacity: 1;
+  }
+  .bookmark-saved-txt.hide {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  /* ── mood icons row ── */
+  .diary-mood-row {
+    position: absolute;
+    top: 42px; /* 14px title + ~19px font height + 9px gap */
+    left: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    z-index: 5;
+  }
+  .mood-icon {
+    width: 34px;
+    height: 30px;
+    cursor: pointer;
+    object-fit: contain;
+    transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+    display: block;
+  }
+  .mood-icon:hover { opacity: 0.78; transform: scale(1.12); filter: brightness(1.18); }
+</style>
+</head>
+<body>
+
+<div class="phone"><div class="screen">
+
+  <!-- ===== INTRO ===== -->
+  <div class="page active" id="screen-intro">
+    <div class="win-bar">
+      <span class="win-title">MINDPET.exe – CREAR AVATAR</span>
+      <div class="win-btns">
+        <div class="win-btn min"><img src="icons/minimize.png" alt="_"></div><div class="win-btn max"><img src="icons/maximize.png" alt="□"></div><div class="win-btn cls"><img src="icons/close.png" alt="✕"></div>
+      </div>
+    </div>
+
+    <div class="logo-text">MINDPET</div>
+    <div class="logo-sub">cuida tu mente · gen z/α edition</div>
+
+    <div class="pixel-label">elige tu compañero:</div>
+    <div class="pet-selector" id="petSelector">
+      <div class="pet-opt selected" data-pet="🐱" data-name="Kiki">
+        <span class="emoji">🐱</span><span class="pet-label">Kiki</span><span class="pet-label">Gatita</span>
+      </div>
+      <div class="pet-opt" data-pet="🦡" data-name="Huro">
+        <span class="emoji">🦡</span><span class="pet-label">Huro</span><span class="pet-label">Hurón</span>
+      </div>
+      <div class="pet-opt" data-pet="🐶" data-name="Dodo">
+        <span class="emoji">🐶</span><span class="pet-label">Dodo</span><span class="pet-label">Perrito</span>
+      </div>
+    </div>
+
+    <div class="pixel-label">color de tu amigo:</div>
+    <div class="color-row" id="colorRow">
+      <div class="color-dot selected" data-color="#57ffeb" style="background:#57ffeb;"></div>
+      <div class="color-dot" data-color="#a99cf9" style="background:#a99cf9;"></div>
+      <div class="color-dot" data-color="#f5c06b" style="background:#f5c06b;"></div>
+      <div class="color-dot" data-color="#f07a7a" style="background:#f07a7a;"></div>
+      <div class="color-dot" data-color="#7af0a8" style="background:#7af0a8;"></div>
+      <div class="color-dot" data-color="#ff9de2" style="background:#ff9de2;"></div>
+    </div>
+
+    <div class="pixel-label">nombre de tu amigo:</div>
+    <input class="pixel-input" id="petNameInput" type="text" placeholder="Ej: Mochi..." maxlength="12" style="height:32px;">
+
+    <div class="pixel-label">cuéntale algo de ti:</div>
+    <textarea class="pixel-input" id="descInput" placeholder="Ej: Me cuesta hablar de mis emociones..." rows="3" style="font-size:11px;line-height:1.7;"></textarea>
+
+    <button class="btn pixel-btn" id="startBtn">▶ INICIAR MINDPET</button>
+    <div style="font-size:9px;color:var(--purple);text-align:center;line-height:1.8;">la IA analiza tu descripción<br>para personalizar tu apoyo ✨</div>
+  </div>
+
+  <!-- ===== APP ===== -->
+  <div class="page" id="screen-app">
+    <div class="win-bar">
+      <span class="win-title" id="appBarTitle">MINDPET.exe</span>
+      <div class="win-btns">
+        <div class="win-btn min"><img src="icons/minimize.png" alt="_"></div><div class="win-btn max"><img src="icons/maximize.png" alt="□"></div>
+        <div class="win-btn cls" id="backBtn"><img src="icons/close.png" alt="✕"></div>
+      </div>
+    </div>
+
+    <div class="app-content">
+
+      <!-- HOME -->
+      <div class="tab active" id="tab-home">
+        <!-- Horizontal stats -->
+        <div class="stats-bar">
+          <div class="stat-col">
+            <span class="stat-icon">💛</span>
+            <span class="stat-label-h">Ánimo</span>
+            <div class="stat-track-v"><div class="stat-fill-h" id="sf-mood" style="width:70%;"></div></div>
+            <span class="stat-num" id="sv-mood">70</span>
+          </div>
+          <div class="stat-col">
+            <span class="stat-icon">🌊</span>
+            <span class="stat-label-h">Social</span>
+            <div class="stat-track-v"><div class="stat-fill-h" id="sf-social" style="width:45%;"></div></div>
+            <span class="stat-num" id="sv-social">45</span>
+          </div>
+          <div class="stat-col">
+            <span class="stat-icon">🌙</span>
+            <span class="stat-label-h">Sueño</span>
+            <div class="stat-track-v"><div class="stat-fill-h" id="sf-sleep" style="width:60%;"></div></div>
+            <span class="stat-num" id="sv-sleep">60</span>
+          </div>
+          <div class="stat-col">
+            <span class="stat-icon">😰</span>
+            <span class="stat-label-h">Ansiedad</span>
+            <div class="stat-track-v"><div class="stat-fill-h" id="sf-anxiety" style="width:35%;"></div></div>
+            <span class="stat-num" id="sv-anxiety">35</span>
+          </div>
+          <div class="stat-col">
+            <span class="stat-icon">😴</span>
+            <span class="stat-label-h">Cansancio</span>
+            <div class="stat-track-v"><div class="stat-fill-h" id="sf-tired" style="width:50%;"></div></div>
+            <span class="stat-num" id="sv-tired">50</span>
+          </div>
+        </div>
+
+        <div class="pet-area" id="petArea">
+          <!-- pet PNG sprites (all stacked, only one visible at a time) -->
+          <div class="pet-sprite-wrap" id="petSpriteWrap">
+            <img class="pet-png visible" id="pet_parado1" src="icons/parado1.png" style="width:209.38px;height:209.26px;" alt="parado1">
+            <img class="pet-png" id="pet_parado2" src="icons/parado2.png" style="width:209.38px;height:209.26px;" alt="parado2">
+            <img class="pet-png" id="pet_parado3" src="icons/parado3.png" style="width:209.38px;height:209.26px;" alt="parado3">
+            <img class="pet-png" id="pet_paradosaludo" src="icons/paradosaludo.png" style="width:209.38px;height:209.26px;" alt="paradosaludo">
+            <!-- drag frames -->
+            <img class="pet-drag-png" id="pet_arrastrado1" src="icons/arrastrado1.png" style="width:117.17px;height:132.72px;" alt="arrastrado1">
+            <img class="pet-drag-png" id="pet_arrastrado2" src="icons/arrastrado2.png" style="width:124.94px;height:124.94px;" alt="arrastrado2">
+            <img class="pet-drag-png" id="pet_arrastrado3" src="icons/arrastrado3.png" style="width:134.67px;height:138.01px;" alt="arrastrado3">
+          </div>
+          <div class="pet-sprite" id="petSprite" style="display:none;"></div>
+          <div class="pet-name-tag" id="petNameTag" style="display:none;"></div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn action-btn" id="btnFood"><span class="ab-icon">🍱</span><span>COMIDA</span></button>
+          <button class="btn action-btn" id="btnMsg"><span class="ab-icon">💌</span><span>MENSAJITO</span></button>
+        </div>
+
+        <div class="item-menu" id="itemMenu">
+          <!-- title bar negro -->
+          <div class="im-titlebar">
+            <div class="im-dot im-dot-1"></div>
+            <div class="im-dot im-dot-2"></div>
+            <div class="im-dot im-dot-3"></div>
+            <span class="im-titlebar-text" id="menuTitle">INVENTARIO COMIDA</span>
+            <div class="im-close-wrap">
+              <button class="im-close-btn" id="closeMenu" onclick="closeItemMenu()"><img src="icons/x.png" alt="x" id="imCloseImg" style="width:12px;height:12px;object-fit:contain;display:block;"></button>
+            </div>
+          </div>
+          <!-- body beige -->
+          <div class="im-body">
+            <div class="im-grid" id="itemGrid">
+              <!-- slot 1: ramen -->
+              <div class="im-slot" onclick="feedPet('ramen')">
+                <img class="slot-bg" src="icons/slot.png" alt="">
+                <img class="slot-item" src="icons/ramen.png" alt="ramen">
+              </div>
+              <!-- slot 2: cake -->
+              <div class="im-slot" onclick="feedPet('cake')">
+                <img class="slot-bg" src="icons/slot.png" alt="">
+                <img class="slot-item" src="icons/cake.png" alt="cake">
+              </div>
+              <!-- slot 3: potion -->
+              <div class="im-slot" onclick="feedPet('potion')">
+                <img class="slot-bg" src="icons/slot.png" alt="">
+                <img class="slot-item" src="icons/potion.png" alt="potion">
+              </div>
+              <!-- slots 4-8 vacíos -->
+              <div class="im-slot"><img class="slot-bg" src="icons/slot.png" alt=""></div>
+              <div class="im-slot"><img class="slot-bg" src="icons/slot.png" alt=""></div>
+              <div class="im-slot"><img class="slot-bg" src="icons/slot.png" alt=""></div>
+              <div class="im-slot"><img class="slot-bg" src="icons/slot.png" alt=""></div>
+              <div class="im-slot"><img class="slot-bg" src="icons/slot.png" alt=""></div>
+            </div>
+            <!-- scrollbar slider -->
+            <div class="im-scrollbar" id="imScrollbar">
+              <div class="im-slider-thumb" id="imSliderThumb">
+                <img src="icons/slider.png" alt="slider" id="imSliderImg">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIARY -->
+      <div class="tab" id="tab-diary">
+        <!-- ¿CÓMO TE SIENTES HOY? -->
+        <div style="position:absolute;top:14px;left:20px;font-family:'LowresPixel',monospace;font-size:19px;color:var(--dark);z-index:5;pointer-events:none;">¿CÓMO TE SIENTES HOY?</div>
+
+        <!-- mood icons -->
+        <div class="diary-mood-row">
+          <img class="mood-icon" src="icons/sad.png" id="mood_sad" onclick="selectMood('sad')" alt="sad">
+          <img class="mood-icon" src="icons/unc.png" id="mood_unc" onclick="selectMood('unc')" alt="unc">
+          <img class="mood-icon" src="icons/normal.png" id="mood_normal" onclick="selectMood('normal')" alt="normal">
+          <img class="mood-icon" src="icons/happy.png" id="mood_happy" onclick="selectMood('happy')" alt="happy">
+          <img class="mood-icon" src="icons/megahappy.png" id="mood_megahappy" onclick="selectMood('megahappy')" alt="megahappy">
+        </div>
+
+        <!-- mood icons -->
+        <div class="diary-mood-row">
+          <img class="mood-icon" src="icons/sad.png" id="mood_sad" onclick="selectMood('sad')" alt="sad">
+          <img class="mood-icon" src="icons/unc.png" id="mood_unc" onclick="selectMood('unc')" alt="unc">
+          <img class="mood-icon" src="icons/normal.png" id="mood_normal" onclick="selectMood('normal')" alt="normal">
+          <img class="mood-icon" src="icons/happy.png" id="mood_happy" onclick="selectMood('happy')" alt="happy">
+          <img class="mood-icon" src="icons/megahappy.png" id="mood_megahappy" onclick="selectMood('megahappy')" alt="megahappy">
+        </div>
+
+        <!-- bookmark -->
+        <div class="diary-bookmark-wrap" id="bookmarkWrap">
+          <img class="diary-bookmark-img" src="icons/bookmark.png" alt="bookmark" id="bookmarkImg" onclick="toggleBookmark()" style="width:24px;height:28px;">
+          <span class="bookmark-saved-txt" id="bookmarkTxt">GUARDADO!</span>
+        </div>
+
+        <!-- diary base: 320x465, centered -->
+        <div class="diary-base" id="diaryBase">
+          <!-- chat view -->
+          <div class="diary-chat-view" id="diaryChatView">
+            <div class="diary-chat-scroll" id="diaryChatScroll">
+              <div style="align-self:flex-start; font-family:'LowresPixel',monospace; font-size:19.2pt; color:var(--cream); line-height:1; margin-bottom:-11px; margin-left:7px; margin-top:-46px;">ABR - 17</div>
+              <div class="chat-bubble-user" style="margin-top:35px;">hoy no pasó mucho… solo estuve viendo el celular casi todo el día. Me sentí raro pero no sé por qué</div>
+              <div class="chat-bubble-user">siento que todos están avanzando menos yo. veo cosas en redes y me comparo mucho</div>
+              <div class="chat-bubble-user">hoy subí una foto y nadie reaccionó… Sentí que a nadie le importo, como que no soy suficiente</div>
+              <div class="chat-action-row" id="chatActions">
+                <button class="chat-action-btn" onclick="showIAResponse()">🧠 apoyo ia</button>
+                <button class="chat-action-btn save">guardar</button>
+              </div>
+              <div class="chat-bubble-ia" id="iaBubble">Parece que estás conectando tu valor con la reacción de otros, y eso puede doler mucho. Lo que pasa en redes no siempre refleja quién eres 💙</div>
+            </div>
+            <!-- input bar -->
+            <div class="diary-chat-input-row">
+              <textarea class="diary-chat-input" id="diaryChatInput" placeholder="escribe algo..." rows="1" onkeydown="handleDiaryKey(event)"></textarea>
+              <button class="diary-chat-send" onclick="sendDiaryMessage()">➤</button>
+            </div>
+          </div>
+
+          <div class="diary-tabs-row">
+            <!-- FEB -->
+            <div class="diary-tab-wrapper tab-active">
+              <button class="diary-tab-btn active" onclick="selectDiaryMonth(this,'feb')">FEB</button>
+              <div class="diary-date-dropdown">
+                <div class="diary-date-item" onclick="openDiaryDay(this,'03 FEB')">03 FEB</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'09 FEB')">09 FEB</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'14 FEB')">14 FEB</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'19 FEB')">19 FEB</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'26 FEB')">26 FEB</div>
+              </div>
+            </div>
+            <!-- MAR -->
+            <div class="diary-tab-wrapper">
+              <button class="diary-tab-btn" onclick="selectDiaryMonth(this,'mar')">MAR</button>
+              <div class="diary-date-dropdown">
+                <div class="diary-date-item" onclick="openDiaryDay(this,'07 MAR')">07 MAR</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'15 MAR')">15 MAR</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'28 MAR')">28 MAR</div>
+              </div>
+            </div>
+            <!-- ABR -->
+            <div class="diary-tab-wrapper">
+              <button class="diary-tab-btn" onclick="selectDiaryMonth(this,'abr')">ABR</button>
+              <div class="diary-date-dropdown">
+                <div class="diary-date-item" onclick="openDiaryDay(this,'05 ABR')">05 ABR</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'11 ABR')">11 ABR</div>
+                <div class="diary-date-item" onclick="openDiaryDay(this,'18 ABR')">18 ABR</div>
+                <div class="diary-date-item" onclick="openDiaryChat()">HOY</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI popup -->
+        <div class="ai-popup" id="aiPopup">
+          <div class="win-bar-inline">
+            <span class="win-title">✨ APOYO IA.exe</span>
+            <div class="win-btns"><div class="win-btn cls" onclick="closeAI()"><img src="icons/close.png" alt="✕"></div></div>
+          </div>
+          <div class="ai-popup-title">🤖 MindBot analizando...</div>
+          <div class="ai-response-text" id="aiResponseText"><span class="ai-thinking">procesando... ▋</span></div>
+          <button class="btn popup-close" onclick="closeAI()">✕ CERRAR</button>
+        </div>
+      </div>
+
+      <!-- PLANT -->
+      <div class="tab" id="tab-plant" style="position:relative; overflow:hidden; background:var(--cream);">
+
+
+        <!-- plant stage: coordenadas desde esquina inferior izquierda del celular -->
+        <div class="plant-overlay" id="plantOverlay" onclick="closePlantLogro()"></div>
+        <div class="plant-stage" id="plantStage">
+
+        <!-- ramita -->
+        <div style="position:absolute; left:109.12px; bottom:482.51px; z-index:1;">
+          <img class="plant-png" src="icons/ramita.png" alt="ramita" id="plant_ramita" onclick="plantClick('ramita')" style="width:135.93px;height:371.83px;">
+        </div>
+        <!-- hoja1 -->
+        <div style="position:absolute; left:185.28px; bottom:192.15px; z-index:2;">
+          <img class="plant-png" src="icons/hoja1.png" alt="hoja1" id="plant_hoja1" onclick="plantClick('hoja1')" style="width:71.46px;height:58.83px;">
+          <img class="plant-png-b" src="icons/hoja1b.png" alt="hoja1b" id="plant_hoja1b" style="width:71.46px;height:58.83px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- hoja2 -->
+        <div style="position:absolute; left:110.7px; bottom:253.23px; z-index:3;">
+          <img class="plant-png" src="icons/hoja2.png" alt="hoja2" id="plant_hoja2" onclick="plantClick('hoja2')" style="width:78.57px;height:55.22px;">
+          <img class="plant-png-b" src="icons/hoja2b.png" alt="hoja2b" id="plant_hoja2b" style="width:78.57px;height:55.22px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- hoja3 -->
+        <div style="position:absolute; left:223.88px; bottom:324.9px; z-index:4;">
+          <img class="plant-png" src="icons/hoja3.png" alt="hoja3" id="plant_hoja3" onclick="plantClick('hoja3')" style="width:78.57px;height:53.91px;">
+          <img class="plant-png-b" src="icons/hoja3b.png" alt="hoja3b" id="plant_hoja3b" style="width:78.57px;height:53.91px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- hoja4 -->
+        <div style="position:absolute; left:92.07px; bottom:361.53px; z-index:5;">
+          <img class="plant-png" src="icons/hoja4.png" alt="hoja4" id="plant_hoja4" onclick="plantClick('hoja4')" style="width:74.0px;height:58.0px;">
+          <img class="plant-png-b" src="icons/hoja4b.png" alt="hoja4b" id="plant_hoja4b" style="width:74.0px;height:58.0px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- hoja5 -->
+        <div style="position:absolute; left:176.14px; bottom:432.83px; z-index:6;">
+          <img class="plant-png" src="icons/hoja5.png" alt="hoja5" id="plant_hoja5" onclick="plantClick('hoja5')" style="width:59.49px;height:67.07px;">
+          <img class="plant-png-b" src="icons/hoja5b.png" alt="hoja5b" id="plant_hoja5b" style="width:59.49px;height:67.07px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- hoja6 -->
+        <div style="position:absolute; left:56.52000000000001px; bottom:467.09px; z-index:7;">
+          <img class="plant-png" src="icons/hoja6.png" alt="hoja6" id="plant_hoja6" onclick="plantClick('hoja6')" style="width:72.1px;height:55.8px;">
+          <img class="plant-png-b" src="icons/hoja6b.png" alt="hoja6b" id="plant_hoja6b" style="width:72.1px;height:55.8px;position:absolute;top:0;left:0;">
+        </div>
+        <!-- flor -->
+        <div style="position:absolute; left:121.53px; bottom:570.7px; z-index:8;">
+          <img class="plant-png" src="icons/flor.png" alt="flor" id="plant_flor" onclick="plantClick('flor')" style="width:114.49px;height:124.88px;">
+          <img class="plant-png-b" src="icons/florb.png" alt="florb" id="plant_florb" style="width:114.49px;height:124.88px;position:absolute;top:0;left:0;">
+        </div>
+
+        <div class="logro-card from-right" id="logro_hoja1" style="left:69.58px; bottom:149.37px;">
+          <img src="icons/logro1.png" alt="logro1">
+        </div>
+        <div class="logro-card from-left" id="logro_hoja2" style="left:4.00px; bottom:208.64px;">
+          <img src="icons/logro2.png" alt="logro2">
+        </div>
+        <div class="logro-card from-right" id="logro_hoja3" style="left:69.58px; bottom:279.65px;">
+          <img src="icons/logro3.png" alt="logro3">
+        </div>
+        <div class="logro-card from-left" id="logro_hoja4" style="left:4.00px; bottom:318.33px;">
+          <img src="icons/logro4.png" alt="logro4">
+        </div>
+        <div class="logro-card from-left" id="logro_hoja5" style="left:4.00px; bottom:394.17px;">
+          <img src="icons/logro5.png" alt="logro5">
+        </div>
+        <div class="logro-card from-left" id="logro_hoja6" style="left:4.00px; bottom:422.79px;">
+          <img src="icons/logro6.png" alt="logro6">
+        </div>
+        <div class="logro-card from-bottom" id="logro_flor" style="left:35.56px; bottom:414.30px;">
+          <img src="icons/logro7.png" alt="logro7">
+        </div>
+        </div>
+
+        <div class="leaf-popup" id="leafPopup">
+          <button class="btn popup-close" onclick="closeLeaf()">◀ VOLVER</button>
+          <div class="leaf-popup-card">
+            <div class="leaf-popup-icon" id="leafPopupIcon">🍃</div>
+            <div class="leaf-popup-date" id="leafPopupDate"></div>
+            <div class="leaf-popup-text" id="leafPopupText"></div>
+          </div>
+          <div style="font-size:9px;color:var(--purple);text-align:center;line-height:1.8;">guardado para siempre en tu jardín 💜</div>
+        </div>
+      </div>
+
+      <!-- CONTACTS -->
+      <div class="tab" id="tab-contacts">
+        <div class="win-bar-inline">
+          <span class="win-title">📱 CONTACTOS.exe</span>
+          <div class="win-btns"><div class="win-btn min"><img src="icons/minimize.png" alt="_"></div></div>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-bar">── MindNet Social ──</div>
+          <div class="contact-item" onclick="openContact(0)">
+            <span class="contact-avatar">🦊</span>
+            <div class="contact-info"><div class="contact-name">Suki_Art</div><div class="contact-status">🟢 en línea</div></div>
+            <div class="contact-unread">2</div>
+          </div>
+          <div class="contact-item" onclick="openContact(1)">
+            <span class="contact-avatar">🐸</span>
+            <div class="contact-info"><div class="contact-name">FrogMode99</div><div class="contact-status">🟢 en línea</div></div>
+          </div>
+          <div class="contact-item" onclick="openContact(2)">
+            <span class="contact-avatar">🌙</span>
+            <div class="contact-info"><div class="contact-name">LunaPixel</div><div class="contact-status offline">⭕ offline · hace 2h</div></div>
+          </div>
+          <div class="contact-item" onclick="openContact(3)">
+            <span class="contact-avatar">🎮</span>
+            <div class="contact-info"><div class="contact-name">GamerMind</div><div class="contact-status offline">⭕ offline · ayer</div></div>
+          </div>
+        </div>
+        <div class="contact-popup" id="contactPopup">
+          <div class="contact-popup-header">
+            <button class="btn popup-close" onclick="closeContact()" style="font-size:10px;padding:5px 10px;margin-right:4px;">◀</button>
+            <span class="contact-popup-avatar" id="cpAvatar">🦊</span>
+            <div><div class="contact-popup-name" id="cpName">Suki_Art</div><div class="contact-popup-sub" id="cpStatus">🟢 en línea</div></div>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-row">
+            <input class="pixel-input" id="chatInput" placeholder="escribe..." style="height:36px;font-size:11px;">
+            <button class="btn meme-btn" id="sendMemeBtn">🐱 MEME</button>
+            <button class="btn send-btn" id="sendChatBtn" style="font-size:11px;padding:7px 11px;">➤</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /app-content -->
+
+    <div class="navbar">
+      <div class="nav-item active" data-tab="tab-home" onclick="switchTab(this)">
+        <img class="nav-icon" src="icons/home.png" data-default="icons/home black.png" data-active="icons/home.png" alt="home">
+        <span class="nav-label">HOME</span>
+      </div>
+      <div class="nav-item" data-tab="tab-diary" onclick="switchTab(this)">
+        <img class="nav-icon" src="icons/diary black.png" data-default="icons/diary black.png" data-active="icons/diary.png" alt="diario">
+        <span class="nav-label">DIARIO</span>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="nav-item" data-tab="tab-plant" onclick="switchTab(this)">
+        <img class="nav-icon" src="icons/plant black.png" data-default="icons/plant black.png" data-active="icons/plant.png" alt="planta">
+        <span class="nav-label">PLANTA</span>
+      </div>
+      <div class="nav-item" data-tab="tab-contacts" onclick="switchTab(this)">
+        <img class="nav-icon" src="icons/phone black.png" data-default="icons/phone black.png" data-active="icons/phone.png" alt="contactos">
+        <span class="nav-label">RED</span>
+      </div>
+    </div>
+  </div>
+
+</div></div><!-- /phone/screen -->
+
+<script>
+let petEmoji='🐱',petName='Kiki',petColor='#57ffeb',currentContact=0;
+
+// ── pet sprite animator ──
+const petFrames = ['parado1','parado2','parado3','paradosaludo'];
+let currentPet = 'parado1';
+let petAnimTimer = null;
+
+function showPetFrame(name){
+  petFrames.forEach(f => {
+    const el = document.getElementById('pet_' + f);
+    if(el) el.classList.toggle('visible', f === name);
+  });
+  currentPet = name;
+}
+
+function schedulePetAnim(){
+  if(petAnimTimer) clearTimeout(petAnimTimer);
+  const roll = Math.random();
+  let nextFrame, holdDuration;
+
+  if(roll < 0.25){
+    // paradosaludo: 1 in 4 times
+    nextFrame = 'paradosaludo';
+    holdDuration = 1000;
+    const delay = 1800 + Math.random() * 1200;
+    petAnimTimer = setTimeout(()=>{
+      showPetFrame(nextFrame);
+      setTimeout(()=>{ showPetFrame('parado1'); schedulePetAnim(); }, holdDuration);
+    }, delay);
+  } else {
+    // parado2 or parado3: every 5s, holds 1s
+    nextFrame = roll < 0.55 ? 'parado2' : 'parado3';
+    holdDuration = 500;
+    const delay = 1800 + Math.random() * 1200;
+    petAnimTimer = setTimeout(()=>{
+      showPetFrame(nextFrame);
+      setTimeout(()=>{ showPetFrame('parado1'); schedulePetAnim(); }, holdDuration);
+    }, delay);
+  }
+}
+
+// start animation loop
+schedulePetAnim();
+
+// ── pet drag ──
+const dragFrames = ['arrastrado1','arrastrado2','arrastrado3'];
+let isDragging = false;
+let dragAnimInterval = null;
+let dragFrameIdx = 0;
+let dragOffsetX = 0, dragOffsetY = 0;
+
+function showDragFrame(idx){
+  dragFrames.forEach((f,i) => {
+    const el = document.getElementById('pet_' + f);
+    if(el) el.classList.toggle('visible', i === idx);
+  });
+}
+
+function startDrag(e){
+  isDragging = true;
+  const wrap = document.getElementById('petSpriteWrap');
+  wrap.classList.add('dragging');
+
+  // hide parado frames, stop idle anim
+  if(petAnimTimer) clearTimeout(petAnimTimer);
+  petFrames.forEach(f => {
+    const el = document.getElementById('pet_' + f);
+    if(el) el.classList.remove('visible');
+  });
+
+  // start drag frame cycling
+  dragFrameIdx = 0;
+  showDragFrame(0);
+  dragAnimInterval = setInterval(()=>{
+    dragFrameIdx = (dragFrameIdx + 1) % dragFrames.length;
+    showDragFrame(dragFrameIdx);
+  }, 125);
+
+  // offset
+  const cx = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  const cy = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+  // use 0,0 offset so pet center follows cursor exactly
+  dragOffsetX = 0;
+  dragOffsetY = 0;
+  wrap.style.position = 'fixed';
+  wrap.style.left = cx + 'px';
+  wrap.style.top = cy + 'px';
+  wrap.style.transform = 'translate(-50%, -35%)';
+  e.preventDefault();
+}
+
+function onDragMove(e){
+  if(!isDragging) return;
+  const wrap = document.getElementById('petSpriteWrap');
+  const cx = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+  const cy = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+  wrap.style.left = (cx - dragOffsetX) + 'px';
+  wrap.style.top = (cy - dragOffsetY) + 'px';
+  wrap.style.transform = 'translate(-50%, -35%)';
+  e.preventDefault();
+}
+
+function endDrag(){
+  if(!isDragging) return;
+  isDragging = false;
+  const wrap = document.getElementById('petSpriteWrap');
+  wrap.classList.remove('dragging');
+
+  // stop drag anim
+  if(dragAnimInterval) clearInterval(dragAnimInterval);
+  dragFrames.forEach(f => {
+    const el = document.getElementById('pet_' + f);
+    if(el) el.classList.remove('visible');
+  });
+
+  // restore position
+  wrap.style.position = 'absolute';
+  wrap.style.left = '50%';
+  wrap.style.top = 'calc(50% - 30px)';
+  wrap.style.transform = 'translate(calc(-50% + 10px), -50%)';
+
+  // restore parado1 and restart idle anim
+  showPetFrame('parado1');
+  schedulePetAnim();
+}
+
+// attach events
+const petWrap = document.getElementById('petSpriteWrap');
+if(petWrap){
+  petWrap.addEventListener('mousedown', startDrag);
+  petWrap.addEventListener('touchstart', startDrag, {passive:false});
+}
+document.addEventListener('mousemove', onDragMove);
+document.addEventListener('touchmove', onDragMove, {passive:false});
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+let stats={mood:70,social:45,sleep:60,anxiety:35,tired:50};
+
+const foods=[
+  {e:'🍩',n:'Dona', mood:+10,social:0, sleep:0,  anxiety:-5, tired:-5},
+  {e:'🍵',n:'Té',   mood:+5, social:+5,sleep:+15,anxiety:-10,tired:-8},
+  {e:'🍓',n:'Fresa',mood:+8, social:+3,sleep:+5, anxiety:-8, tired:-5},
+  {e:'🍕',n:'Pizza',mood:+12,social:+8,sleep:-5, anxiety:0,  tired:-3},
+  {e:'💧',n:'Agua', mood:+3, social:0, sleep:+10,anxiety:-5, tired:-10},
+  {e:'🎂',n:'Pastel',mood:+15,social:+5,sleep:-8,anxiety:+5, tired:+3},
+];
+const messages=[
+  {e:'💙',n:'Te quiero',  mood:+15,social:+10,sleep:+5, anxiety:-10,tired:-5},
+  {e:'⭐',n:'Eres genial',mood:+12,social:+8, sleep:0,  anxiety:-8, tired:-3},
+  {e:'🤗',n:'Abrazo',     mood:+18,social:+12,sleep:+5, anxiety:-15,tired:-8},
+  {e:'✨',n:'Brillante',  mood:+10,social:+5, sleep:0,  anxiety:-5, tired:0},
+  {e:'🎮',n:'¡Vamos!',   mood:+8, social:+10,sleep:-3, anxiety:-3, tired:+3},
+  {e:'🌟',n:'Orgullo',   mood:+20,social:+10,sleep:+5, anxiety:-12,tired:-5},
+];
+const contactData=[
+  {avatar:'🦊',name:'Suki_Art',status:'🟢 en línea',msgs:[
+    {me:false,text:'oye viste el último meme del hurón?? 💀'},
+    {me:false,text:'me recuerda mucho a nuestra clase lmao'},
+    {me:true, text:'jajajaja sí lo vi! demasiado real 😭'},
+    {me:false,text:'oye, ¿estás bien? te noté raro/a hoy'},
+    {me:true, text:'sí, solo un poco cansado/a. gracias 💙'},
+  ]},
+  {avatar:'🐸',name:'FrogMode99',status:'🟢 en línea',msgs:[
+    {me:false,text:'bro ese examen estuvo brutal'},
+    {me:true, text:'lo sé!!! necesito un break ya 😩'},
+    {me:false,text:'hey mándame un meme que me alegre'},
+  ]},
+  {avatar:'🌙',name:'LunaPixel',status:'⭕ offline · hace 2h',msgs:[
+    {me:false,text:'gracias por escucharme hoy 🌙'},
+    {me:true, text:'siempre! para eso estamos 💜'},
+  ]},
+  {avatar:'🎮',name:'GamerMind',status:'⭕ offline · ayer',msgs:[
+    {me:false,text:'¿jugamos más tarde?'},
+    {me:true, text:'claro! a las 7 te veo en el server'},
+  ]},
+];
+const memes=['😭😭😭','💀💀','me when monday','noooo way','literally same','skill issue 💀','vibe check failed','it is what it is','no cap fr fr'];
+const leafData=[
+  {icon:'🍃',date:'3 de julio, 2025',    text:'Me decidí a hablar de mis emociones por primera vez. Fue difícil pero lo hice.'},
+  {icon:'🌿',date:'15 de agosto, 2025',  text:'¡Logré dormir 8 horas seguidas! Sin ansiedad. Una victoria enorme.'},
+  {icon:'🌱',date:'10 de enero, 2026',   text:'Hablé con alguien de confianza sobre cómo me sentía. Fue liberador.'},
+];
+const AI_FALLBACKS=[
+  `Gracias por compartir eso conmigo. 💙\n\nLo que sientes es completamente válido. A veces el día nos pesa.\n\n¿Qué pequeña cosa podrías hacer esta noche para cuidarte? ¿Agua, música, descanso? 🌙`,
+  `Lo que describes es muy común. 💜\n\nCuando los pensamientos dan vueltas, prueba nombrar 5 cosas que puedes ver ahora mismo. Es técnica de grounding.\n\n¿La practicamos? ✨`,
+  `Escribir cómo te sientes ya es un acto enorme de valentía. 🌟\n\nTu experiencia importa. No tienes que tenerlo todo resuelto.\n\nUn día a la vez. Estoy aquí. 🐾`,
+];
+let aiIdx=0;
+
+// INTRO
+document.querySelectorAll('.pet-opt').forEach(o=>o.addEventListener('click',()=>{
+  document.querySelectorAll('.pet-opt').forEach(x=>x.classList.remove('selected'));
+  o.classList.add('selected'); petEmoji=o.dataset.pet; petName=o.dataset.name;
+}));
+document.querySelectorAll('.color-dot').forEach(d=>d.addEventListener('click',()=>{
+  document.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));
+  d.classList.add('selected'); petColor=d.dataset.color;
+}));
+document.getElementById('startBtn').addEventListener('click',()=>{
+  const n=document.getElementById('petNameInput').value.trim();
+  if(n) petName=n; initApp();
+});
+function initApp(){
+  document.getElementById('petSprite').textContent=petEmoji;
+  document.getElementById('petNameTag').textContent=petName;
+  document.getElementById('petSprite').style.filter=`drop-shadow(0 0 16px ${petColor}80)`;
+  document.getElementById('appBarTitle').textContent=`MINDPET.exe – ${petName.toUpperCase()}`;
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+}
+document.getElementById('backBtn').addEventListener('click',()=>{
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-intro').classList.add('active');
+});
+
+// TABS
+function switchTab(el){
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.remove('active');
+    const img=n.querySelector('.nav-icon');
+    if(img) img.src=img.dataset.default;
+  });
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const activeImg=el.querySelector('.nav-icon');
+  if(activeImg) activeImg.src=activeImg.dataset.active;
+  document.getElementById(el.dataset.tab).classList.add('active');
+  closeItemMenu();
+  if(el.dataset.tab==='tab-diary'){const nd=el.querySelector('.notif-dot');if(nd)nd.style.display='none';}
+}
+
+// STATS
+function updateStats(){
+  ['mood','social','sleep','anxiety','tired'].forEach(k=>{
+    stats[k]=Math.max(0,Math.min(100,stats[k]));
+    document.getElementById('sf-'+k).style.width=stats[k]+'%';
+    document.getElementById('sv-'+k).textContent=stats[k];
+  });
+}
+function applyItem(item){
+  stats.mood+=(item.mood||0); stats.social+=(item.social||0);
+  stats.sleep+=(item.sleep||0); stats.anxiety+=(item.anxiety||0); stats.tired+=(item.tired||0);
+  updateStats();
+  const s=document.querySelector('.pet-png.visible');
+  if(s){ s.classList.add('bounce'); setTimeout(()=>s.classList.remove('bounce'),500); }
+  const sp=document.getElementById('petSprite');
+  if(sp){ sp.classList.add('bounce'); setTimeout(()=>sp.classList.remove('bounce'),500); }
+  spawnParticle(item.e);
+}
+function spawnParticle(emoji){
+  const ph=document.querySelector('.phone').getBoundingClientRect();
+  const p=document.createElement('div'); p.className='particle'; p.textContent=emoji;
+  p.style.left=(ph.left+ph.width/2-8)+'px'; p.style.top=(ph.top+ph.height*0.45)+'px';
+  document.body.appendChild(p); setTimeout(()=>p.remove(),1500);
+}
+
+// ITEM MENU
+document.getElementById('btnFood').addEventListener('click',()=>openMenu('food'));
+document.getElementById('btnMsg').addEventListener('click',()=>openMenu('msg'));
+document.getElementById('closeMenu').addEventListener('click',closeItemMenu);
+function openMenu(type){
+  document.getElementById('menuTitle').textContent=type==='food'?'INVENTARIO COMIDA':'INVENTARIO MENSAJES';
+  document.getElementById('itemMenu').classList.add('show');
+}
+function selectDiaryMonth(el, month){
+  document.querySelectorAll('.diary-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.diary-tab-wrapper').forEach(w => w.classList.remove('tab-active'));
+  el.classList.add('active');
+  const wrapper = el.closest('.diary-tab-wrapper');
+  if(wrapper) wrapper.classList.add('tab-active');
+  // close chat view when switching months
+  const cv = document.getElementById('diaryChatView');
+  if(cv) cv.classList.remove('visible');
+  const ib = document.getElementById('iaBubble');
+  if(ib) ib.classList.remove('visible');
+}
+
+const moods = ['sad','unc','normal','happy','megahappy'];
+let selectedMood = null;
+
+function selectMood(name){
+  // toggle off if already selected
+  if(selectedMood === name){
+    const img = document.getElementById('mood_' + name);
+    if(img) img.src = 'icons/' + name + '.png';
+    selectedMood = null;
+    return;
+  }
+  moods.forEach(m => {
+    const img = document.getElementById('mood_' + m);
+    if(!img) return;
+    img.src = m === name ? 'icons/' + m + 'b.png' : 'icons/' + m + '.png';
+  });
+  selectedMood = name;
+}
+
+function toggleBookmark(){
+  const img = document.getElementById('bookmarkImg');
+  const txt = document.getElementById('bookmarkTxt');
+  if(!img || !txt) return;
+  img.src = 'icons/bookmarkb.png';
+  txt.classList.remove('hide');
+  txt.classList.add('show');
+  setTimeout(()=>{
+    txt.classList.add('hide');
+    txt.classList.remove('show');
+  }, 1400);
+}
+function sendDiaryMessage(){
+  const input = document.getElementById('diaryChatInput');
+  const scroll = document.getElementById('diaryChatScroll');
+  const txt = input.value.trim();
+  if(!txt) return;
+
+  // Add user bubble
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble-user';
+  bubble.style.animation = 'bubble-in 0.3s ease-out forwards';
+  bubble.textContent = txt;
+
+  // Add action buttons below new message
+  const actions = document.createElement('div');
+  actions.className = 'chat-action-row';
+  actions.innerHTML = '<button class="chat-action-btn" onclick="showIAResponse()">🧠 apoyo ia</button><button class="chat-action-btn save">guardar</button>';
+
+  scroll.appendChild(bubble);
+  scroll.appendChild(actions);
+
+  input.value = '';
+  input.style.height = 'auto';
+  setTimeout(()=>{ scroll.scrollTop = scroll.scrollHeight; }, 50);
+}
+function handleDiaryKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendDiaryMessage(); }
+}
+const iaResponses = [
+  "Parece que estás conectando tu valor con la reacción de otros, y eso puede doler mucho. Lo que pasa en redes no siempre refleja quién eres 💙",
+  "Compararte con los demás en redes es normal, pero recuerda que solo ves lo que ellos muestran, no toda su realidad. Tú tienes tu propio ritmo 🌱",
+  "Está bien sentirse así. Lo importante es notarlo y no quedarse solo con ese pensamiento. ¿Hay algo que sí salió bien hoy? ✨"
+];
+let iaResponseCount = 0;
+
+function showIAResponse(){
+  const btn = event && event.target ? event.target.closest('.chat-action-row') : null;
+  const scroll = document.getElementById('diaryChatScroll');
+  if(!scroll) return;
+  if(iaResponseCount >= iaResponses.length) return;
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble-ia visible';
+  bubble.textContent = iaResponses[iaResponseCount];
+  iaResponseCount++;
+  // find the action row that was clicked and insert after it
+  const actionRows = scroll.querySelectorAll('.chat-action-row');
+  const lastRow = actionRows[actionRows.length - 1];
+  if(lastRow && lastRow.nextSibling){
+    scroll.insertBefore(bubble, lastRow.nextSibling);
+  } else {
+    scroll.appendChild(bubble);
+  }
+  // disable the clicked apoyo ia btn
+  if(btn){
+    const iaBtn = btn.querySelector('.chat-action-btn:first-child');
+    if(iaBtn){ iaBtn.disabled = true; iaBtn.style.opacity = '0.4'; iaBtn.style.cursor = 'default'; }
+  }
+  setTimeout(()=>{ scroll.scrollTop = scroll.scrollHeight; }, 50);
+}
+const diaryChatData = {"03 FEB": [["hoy me desperté sintiéndome diferente, con ganas de hacer algo nuevo", "user"], ["Es bonito cuando el cuerpo y la mente coinciden. ¿Qué hiciste con esas ganas? 🌟", "ia"]], "09 FEB": [["discutí con alguien que quiero mucho y me quedé con eso todo el día", "user"], ["Los conflictos con quienes amamos duelen diferente. Está bien sentirlo 💙", "ia"]], "14 FEB": [["hoy fue san valentín y me sentí solo aunque estuve con gente", "user"], ["Sentirse solo entre personas es de las cosas más difíciles. No estás raro 🩵", "ia"]], "19 FEB": [["terminé algo que había dejado pendiente hace semanas. me sentí bien", "user"], ["Ese alivio es real. Cada pequeño logro cuenta más de lo que crees ✨", "ia"]], "26 FEB": [["no tengo ganas de nada. no es tristeza exactamente, solo vacío", "user"], ["El vacío también es una señal. Tu cuerpo puede estar pidiendo descanso o cambio 🌙", "ia"]], "07 MAR": [["empecé algo nuevo hoy, nervioso pero emocionado", "user"], ["Esa mezcla de nervios y emoción es exactamente donde crece algo bueno 🌱", "ia"]], "15 MAR": [["me comparé mucho hoy con alguien de mi clase", "user"], ["Compararse es humano, pero recuerda: ves su highlight, no su historia completa 💜", "ia"]], "28 MAR": [["hoy lloré sin saber bien por qué", "user"], ["A veces el cuerpo necesita soltar sin que haya una razón específica. Está bien 🩷", "ia"]], "05 ABR": [["me costó levantarme hoy. todo se siente pesado", "user"], ["Los días pesados también son válidos. No tienes que estar bien todo el tiempo 💙", "ia"]], "11 ABR": [["hablé con alguien de confianza sobre cómo me siento. se sintió bien", "user"], ["Eso es valentía real. Abrirse con alguien de confianza puede cambiarlo todo 🌟", "ia"]], "18 ABR": [["pasé el día solo y no estuvo mal, lo disfruté", "user"], ["Disfrutar tu propia compañía es una habilidad hermosa que no todos tienen 🌿", "ia"]]};
+
+function openDiaryDay(el, dateKey){
+  // mark selected
+  document.querySelectorAll('.diary-date-item').forEach(i=>i.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  const chat = diaryChatData[dateKey];
+  if(!chat) return;
+  // build chat
+  openDiaryChatWithData(dateKey, chat);
+}
+
+function openDiaryChatWithData(dateLabel, messages){
+  const cv = document.getElementById('diaryChatView');
+  const scroll = document.getElementById('diaryChatScroll');
+  if(!cv || !scroll) return;
+  // clear scroll
+  scroll.innerHTML = '';
+  // date label
+  const lbl = document.createElement('div');
+  lbl.style.cssText = "align-self:flex-start;font-family:'LowresPixel',monospace;font-size:19.2pt;color:var(--cream);line-height:1;margin-bottom:-11px;margin-left:7px;margin-top:-46px;";
+  lbl.textContent = dateLabel;
+  scroll.appendChild(lbl);
+  let firstBubble = true;
+  messages.forEach(([txt, type])=>{
+    const b = document.createElement('div');
+    b.className = type==='user' ? 'chat-bubble-user' : 'chat-bubble-ia visible';
+    if(firstBubble && type==='user'){ b.style.marginTop = '35px'; firstBubble = false; }
+    b.textContent = txt;
+    scroll.appendChild(b);
+  });
+  // action btns
+  const row = document.createElement('div');
+  row.className = 'chat-action-row';
+  row.innerHTML = '<button class="chat-action-btn" onclick="showIAResponse()">🧠 apoyo ia</button><button class="chat-action-btn save">guardar</button>';
+  scroll.appendChild(row);
+  iaResponseCount = 0;
+  cv.classList.add('visible');
+}
+
+function openDiaryChat(){
+  const view = document.getElementById('diaryChatView');
+  if(view) view.classList.add('visible');
+}
+function closeDiaryChat(){
+  const view = document.getElementById('diaryChatView');
+  if(view) view.classList.remove('visible');
+}
+function closeItemMenu(){document.getElementById('itemMenu').classList.remove('show');}
+
+// track currently open logro
+let openLogro = null;
+
+function plantClick(name){
+  if(name === 'ramita') return; // ramita no tiene logro
+  const orig = document.getElementById('plant_' + name);
+  const bv   = document.getElementById('plant_' + name + 'b');
+  const card = document.getElementById('logro_' + name);
+
+  // close previously open one
+  if(openLogro && openLogro !== name){
+    const prevOrig = document.getElementById('plant_' + openLogro);
+    const prevBv   = document.getElementById('plant_' + openLogro + 'b');
+    const prevCard = document.getElementById('logro_' + openLogro);
+    if(prevOrig) prevOrig.style.opacity = '1';
+    if(prevBv)   prevBv.style.opacity = '0';
+    if(prevCard) prevCard.classList.remove('visible');
+  }
+
+  const isShowing = card && card.classList.contains('visible');
+  if(bv)   bv.style.opacity   = isShowing ? '0' : '1';
+  if(orig) orig.style.opacity = isShowing ? '1' : '0';
+  if(card) card.classList.toggle('visible', !isShowing);
+  openLogro = isShowing ? null : name;
+  const overlay = document.getElementById('plantOverlay');
+  if(overlay) overlay.classList.toggle('dim', !!openLogro);
+}
+
+function closePlantLogro(){
+  if(!openLogro) return;
+  const prevOrig = document.getElementById('plant_' + openLogro);
+  const prevBv   = document.getElementById('plant_' + openLogro + 'b');
+  const prevCard = document.getElementById('logro_' + openLogro);
+  if(prevOrig) prevOrig.style.opacity = '1';
+  if(prevBv)   prevBv.style.opacity = '0';
+  if(prevCard) prevCard.classList.remove('visible');
+  openLogro = null;
+  const overlay = document.getElementById('plantOverlay');
+  if(overlay) overlay.classList.remove('dim');
+}
+
+// click outside closes logro
+document.addEventListener('click', function(e){
+  if(!openLogro) return;
+  const stage = document.getElementById('plantStage');
+  if(stage && !stage.contains(e.target)){
+    closePlantLogro();
+  }
+});
+
+// Close btn x/xb hover
+const imCloseImg = document.getElementById('imCloseImg');
+const imCloseBtn = document.getElementById('closeMenu');
+if(imCloseImg && imCloseBtn){
+  imCloseBtn.addEventListener('mouseenter', ()=>{ imCloseImg.src='icons/xb.png'; });
+  imCloseBtn.addEventListener('mouseleave', ()=>{ imCloseImg.src='icons/x.png'; });
+}
+
+// Slider drag
+(function(){
+  const scrollbar = document.getElementById('imScrollbar');
+  const thumb = document.getElementById('imSliderThumb');
+  if(!scrollbar || !thumb) return;
+  const trackH = 130, thumbH = 35, maxTop = trackH - thumbH;
+  let dragging = false, startY = 0, startTop = 0;
+  thumb.addEventListener('mousedown', e=>{
+    dragging = true; startY = e.clientY;
+    startTop = parseInt(thumb.style.top||'0');
+    e.preventDefault();
+  });
+  thumb.addEventListener('touchstart', e=>{
+    dragging = true; startY = e.touches[0].clientY;
+    startTop = parseInt(thumb.style.top||'0');
+  }, {passive:true});
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const dy = e.clientY - startY;
+    const newTop = Math.min(maxTop, Math.max(0, startTop + dy));
+    thumb.style.top = newTop + 'px';
+  });
+  document.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    const dy = e.touches[0].clientY - startY;
+    const newTop = Math.min(maxTop, Math.max(0, startTop + dy));
+    thumb.style.top = newTop + 'px';
+  }, {passive:true});
+  document.addEventListener('mouseup', ()=>{ dragging=false; });
+  document.addEventListener('touchend', ()=>{ dragging=false; });
+})();
+const pa=document.getElementById('petArea');
+pa.addEventListener('dragover',e=>e.preventDefault());
+pa.addEventListener('drop',e=>{e.preventDefault();try{applyItem(JSON.parse(e.dataTransfer.getData('text/plain')));closeItemMenu();}catch(err){}});
+
+// DIARY
+document.getElementById('sendDiary').addEventListener('click',()=>{
+  const txt=document.getElementById('diaryInput').value.trim(); if(!txt) return;
+  const now=new Date();
+  const ds=now.toLocaleDateString('es-GT',{day:'numeric',month:'short',year:'numeric'})+' · '+now.toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'});
+  const e=document.createElement('div'); e.className='diary-entry';
+  e.innerHTML=`<div class="entry-date">📅 ${ds.toUpperCase()}</div>
+    <div class="entry-text">${txt}</div>
+    <div class="entry-btns">
+      <button class="btn entry-btn" onclick="showAI(this)">✨ Apoyo IA</button>
+      <button class="btn entry-btn" onclick="showPlantSaved(event)">🌿 Guardar</button>
+    </div>`;
+  document.getElementById('diaryEntries').appendChild(e);
+  document.getElementById('diaryEntries').scrollTop=9999;
+  document.getElementById('diaryInput').value='';
+  stats.mood+=5; stats.anxiety-=5; updateStats(); spawnParticle('💙');
+});
+
+async function showAI(btn){
+  const popup=document.getElementById('aiPopup');
+  const respEl=document.getElementById('aiResponseText');
+  popup.classList.add('show');
+  respEl.innerHTML='<span class="ai-thinking">analizando tu entrada... ▋</span>';
+  const entryText=btn.closest('.diary-entry').querySelector('.entry-text').textContent;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:`Eres MindBot, apoyo de salud mental amigable para adolescentes 11-18 años Gen Z/Alpha guatemalteca. El usuario escribió en su diario: "${entryText}". Respóndeles con empatía, valida sus emociones, da 1-2 sugerencias prácticas simples de autocuidado. Emojis ocasionalmente. Máximo 4 oraciones cortas. Español guatemalteco, tono amigable y cercano, nada clínico.`}]
+      })
+    });
+    const data=await res.json();
+    respEl.textContent=data.content.map(b=>b.text||'').join('');
+  }catch(err){
+    respEl.textContent=AI_FALLBACKS[aiIdx++%AI_FALLBACKS.length];
+  }
+}
+function closeAI(){document.getElementById('aiPopup').classList.remove('show');}
+
+function showPlantSaved(ev){
+  spawnParticle('🌿');
+  const btn=ev.target; const orig=btn.textContent;
+  btn.textContent='✓ GUARDADO!'; btn.style.background='var(--cyan)';
+  setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1400);
+}
+
+// PLANT
+function openLeaf(i){
+  const d=leafData[i];
+  document.getElementById('leafPopupIcon').textContent=d.icon;
+  document.getElementById('leafPopupDate').textContent='📅 '+d.date;
+  document.getElementById('leafPopupText').textContent=d.text;
+  document.getElementById('leafPopup').classList.add('show');
+}
+function closeLeaf(){document.getElementById('leafPopup').classList.remove('show');}
+
+// CONTACTS
+function openContact(i){
+  currentContact=i; const c=contactData[i];
+  document.getElementById('cpAvatar').textContent=c.avatar;
+  document.getElementById('cpName').textContent=c.name;
+  document.getElementById('cpStatus').textContent=c.status;
+  const msgs=document.getElementById('chatMessages'); msgs.innerHTML='';
+  c.msgs.forEach(m=>addMsg(m.text,m.me));
+  document.getElementById('contactPopup').classList.add('show'); msgs.scrollTop=9999;
+}
+function closeContact(){document.getElementById('contactPopup').classList.remove('show');}
+function addMsg(text,isMe){
+  const msgs=document.getElementById('chatMessages');
+  const d=document.createElement('div'); d.className='msg '+(isMe?'me':'them');
+  d.textContent=text; msgs.appendChild(d); msgs.scrollTop=9999;
+}
+document.getElementById('sendChatBtn').addEventListener('click',()=>{
+  const inp=document.getElementById('chatInput'); const txt=inp.value.trim(); if(!txt) return;
+  addMsg(txt,true); inp.value='';
+  const r=['jajajaja 💀','exactly!!','omg real','uwu 🐾','qué cool!','te entiendo 💙','😭😭 dios'];
+  setTimeout(()=>addMsg(r[Math.floor(Math.random()*r.length)],false),700+Math.random()*600);
+});
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('sendChatBtn').click();});
+document.getElementById('sendMemeBtn').addEventListener('click',()=>{
+  addMsg(memes[Math.floor(Math.random()*memes.length)],true);
+  const r=['😂😂😂','bestie no','jajajaja muerto','💀💀 literal yo'];
+  setTimeout(()=>addMsg(r[Math.floor(Math.random()*r.length)],false),600);
+});
+
+updateStats();
+</script>
+</body>
+</html>
